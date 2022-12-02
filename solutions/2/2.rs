@@ -2,9 +2,6 @@
 
 use std::fs;
 
-static WIN_POINTS: i32 = 6;
-static DRAW_POINTS: i32 = 3;
-
 #[derive(PartialEq, Clone)]
 enum Item {
     Rock,
@@ -25,29 +22,50 @@ struct Hand {
     loses_against: Item,
 }
 
+static ROCK: Hand = Hand {
+    item: Item::Rock,
+    points: 1,
+    wins_against: Item::Scissors,
+    loses_against: Item::Paper,
+};
+
+static PAPER: Hand = Hand {
+    item: Item::Paper,
+    points: 2,
+    wins_against: Item::Rock,
+    loses_against: Item::Scissors,
+};
+
+static SCISSORS: Hand = Hand {
+    item: Item::Scissors,
+    points: 3,
+    wins_against: Item::Paper,
+    loses_against: Item::Rock,
+};
+
 impl Hand {
     fn item_needed_to_win(&self, outcome: &Outcome) -> Item {
         match outcome {
             Outcome::Win => self.loses_against.clone(),
-            Outcome::Draw => self.item.clone(),
             Outcome::Loss => self.wins_against.clone(),
+            Outcome::Draw => self.item.clone(),
         }
     }
 }
 
 fn get_outcome(letter: &str) -> Outcome {
     match letter {
+        "Z" => Outcome::Win,
         "X" => Outcome::Loss,
-        "Y" => Outcome::Draw,
-        _ => Outcome::Win,
+        _ => Outcome::Draw,
     }
 }
 
 fn get_outcome_points(outcome: &Outcome) -> i32 {
     match outcome {
-        Outcome::Win => WIN_POINTS,
+        Outcome::Win => 6,
         Outcome::Loss => 0,
-        Outcome::Draw => DRAW_POINTS,
+        Outcome::Draw => 3,
     }
 }
 
@@ -61,43 +79,23 @@ fn main() {
         })
         .collect();
 
-    let rock = Hand {
-        item: Item::Rock,
-        points: 1,
-        wins_against: Item::Scissors,
-        loses_against: Item::Paper,
-    };
-
-    let paper = Hand {
-        item: Item::Paper,
-        points: 2,
-        wins_against: Item::Rock,
-        loses_against: Item::Scissors,
-    };
-    let scissors = Hand {
-        item: Item::Scissors,
-        points: 3,
-        wins_against: Item::Paper,
-        loses_against: Item::Rock,
-    };
-
-    let score = items.iter().fold(0, |acc, (l1, l2)| {
+    let result = items.iter().fold(0, |acc, (l1, l2)| {
         let opponent_hand = match *l1 {
-            "A" => &rock,
-            "B" => &paper,
-            _ => &scissors,
+            "A" => &ROCK,
+            "B" => &PAPER,
+            _ => &SCISSORS,
         };
 
         let outcome = get_outcome(*l2);
         let outcome_points = get_outcome_points(&outcome);
         let item_points = match opponent_hand.item_needed_to_win(&outcome) {
-            Item::Rock => rock.points,
-            Item::Paper => paper.points,
-            Item::Scissors => scissors.points,
+            Item::Rock => ROCK.points,
+            Item::Paper => PAPER.points,
+            Item::Scissors => SCISSORS.points,
         };
 
         acc + outcome_points + item_points
     });
 
-    println!("Result: {}", score);
+    println!("Result: {}", result);
 }
