@@ -1,0 +1,7 @@
+#!/bin/bash
+
+DAY=$1
+
+mkdir -p solutions/$DAY
+[ -f solutions/$DAY/1.rs ] && touch solutions/$DAY/1.rs
+cat src/main.rs > solutions/$DAY/1.rs

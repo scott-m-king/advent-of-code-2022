@@ -1,0 +1,13 @@
+#!/bin/bash
+
+DAY=$1
+
+mkdir -p solutions/$DAY
+mkdir -p src
+
+touch src/main.rs
+echo "" > data.txt
+echo "" > test.txt
+
+echo "// https://adventofcode.com/2022/day/$DAY" > src/main.rs
+cat bin/boilerplate.rs >> src/main.rs
