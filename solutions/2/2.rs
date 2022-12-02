@@ -69,33 +69,36 @@ fn get_outcome_points(outcome: &Outcome) -> i32 {
     }
 }
 
+fn get_hand(letter: &str) -> &Hand {
+    match letter {
+        "A" => &ROCK,
+        "B" => &PAPER,
+        _ => &SCISSORS,
+    }
+}
+
 fn main() {
     let data = fs::read_to_string("data.txt").unwrap();
-    let items: Vec<(&str, &str)> = data
+
+    let result = data
         .lines()
         .map(|x| {
             let pair: Vec<&str> = x.split(" ").collect();
             (pair[0], pair[1])
         })
-        .collect();
+        .into_iter()
+        .fold(0, |acc, (l1, l2)| {
+            let opponent_hand = get_hand(l1);
+            let outcome = get_outcome(l2);
+            let outcome_points = get_outcome_points(&outcome);
+            let item_points = match opponent_hand.item_needed_to_win(&outcome) {
+                Item::Rock => ROCK.points,
+                Item::Paper => PAPER.points,
+                Item::Scissors => SCISSORS.points,
+            };
 
-    let result = items.iter().fold(0, |acc, (l1, l2)| {
-        let opponent_hand = match *l1 {
-            "A" => &ROCK,
-            "B" => &PAPER,
-            _ => &SCISSORS,
-        };
-
-        let outcome = get_outcome(*l2);
-        let outcome_points = get_outcome_points(&outcome);
-        let item_points = match opponent_hand.item_needed_to_win(&outcome) {
-            Item::Rock => ROCK.points,
-            Item::Paper => PAPER.points,
-            Item::Scissors => SCISSORS.points,
-        };
-
-        acc + outcome_points + item_points
-    });
+            acc + outcome_points + item_points
+        });
 
     println!("Result: {}", result);
 }
