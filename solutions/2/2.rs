@@ -77,6 +77,14 @@ fn get_hand(letter: &str) -> &Hand {
     }
 }
 
+fn get_item_points(item: Item) -> i32 {
+    match item {
+        Item::Rock => ROCK.points,
+        Item::Paper => PAPER.points,
+        Item::Scissors => SCISSORS.points,
+    }
+}
+
 fn main() {
     let data = fs::read_to_string("data.txt").unwrap();
 
@@ -91,11 +99,7 @@ fn main() {
             let opponent_hand = get_hand(l1);
             let outcome = get_outcome(l2);
             let outcome_points = get_outcome_points(&outcome);
-            let item_points = match opponent_hand.item_needed_to_win(&outcome) {
-                Item::Rock => ROCK.points,
-                Item::Paper => PAPER.points,
-                Item::Scissors => SCISSORS.points,
-            };
+            let item_points = get_item_points(opponent_hand.item_needed_to_win(&outcome));
 
             acc + outcome_points + item_points
         });
