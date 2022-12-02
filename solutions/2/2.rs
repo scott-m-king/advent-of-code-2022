@@ -52,7 +52,7 @@ fn get_outcome_points(outcome: &Outcome) -> i32 {
 }
 
 fn main() {
-    let data = fs::read_to_string("test.txt").unwrap();
+    let data = fs::read_to_string("data.txt").unwrap();
     let items: Vec<(&str, &str)> = data
         .lines()
         .map(|x| {
@@ -81,25 +81,23 @@ fn main() {
         loses_against: Item::Rock,
     };
 
-    let mut final_score = 0;
-
-    for (l1, l2) in items {
-        let opponent_hand = match l1 {
+    let score = items.iter().fold(0, |acc, (l1, l2)| {
+        let opponent_hand = match *l1 {
             "A" => &rock,
             "B" => &paper,
             _ => &scissors,
         };
 
-        let outcome = get_outcome(l2);
+        let outcome = get_outcome(*l2);
         let outcome_points = get_outcome_points(&outcome);
         let item_points = match opponent_hand.item_needed_to_win(&outcome) {
-            Item::Rock => rock.points, 
+            Item::Rock => rock.points,
             Item::Paper => paper.points,
             Item::Scissors => scissors.points,
         };
 
-        final_score = final_score + outcome_points + item_points;
-    }
+        acc + outcome_points + item_points
+    });
 
-    println!("Result: {}", final_score);
+    println!("Result: {}", score);
 }
