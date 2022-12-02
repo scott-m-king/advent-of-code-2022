@@ -6,4 +6,4 @@ mv src/main.rs solutions/$DAY/2.rs
 [ -f data.txt ] && mv data.txt solutions/$DAY/data.txt
 [ -f test.txt ] && mv test.txt solutions/$DAY/test.txt
 
-bin/new $DAY
+bin/new $(($DAY + 1))
