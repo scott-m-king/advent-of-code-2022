@@ -13,25 +13,25 @@ fn main() {
     let data = fs::read_to_string("data.txt").unwrap();
     let items: Vec<((i32, i32), (i32, i32))> = data
         .lines()
-        .map(|s| {
-            let pair: Vec<Vec<i32>> = s
+        .map(|line| {
+            let pairs: Vec<Vec<i32>> = line
                 .split(",")
-                .map(|p| {
-                    p.split("-")
+                .map(|pair| {
+                    pair.split("-")
                         .map(|n| n.parse::<i32>().unwrap())
                         .collect::<Vec<i32>>()
                 })
                 .collect();
 
-            (get_tuple(pair.get(0)), get_tuple(pair.get(1)))
+            (get_tuple(pairs.get(0)), get_tuple(pairs.get(1)))
         })
         .collect();
 
     let overlaps = items.iter().filter(|((start1, end1), (start2, end2))| {
-         start1 >= start2 && start1 <= end2 // start of the first in range of second
-            || end1 >= start2 && end1 <= end2 // end of first in range of second
+        start1 >= start2 && start1 <= end2        // start of first in range of second
+            || end1 >= start2 && end1 <= end2     // end of first in range of second
             || start2 >= start1 && start2 <= end1 // start of second in range of first            
-            || end2 >= start1 && end2 <= end1 // end of second in range of first
+            || end2 >= start1 && end2 <= end1     // end of second in range of first
     });
 
     println!("{}", overlaps.count());
