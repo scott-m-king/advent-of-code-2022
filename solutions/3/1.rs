@@ -25,11 +25,7 @@ fn main() {
     let mut priorities: Vec<i32> = vec![0; 53];
 
     for (first, second) in items {
-        let mut set: HashSet<char> = HashSet::new();
-        first.chars().for_each(|char| {
-            set.insert(char);
-        });
-
+        let set: HashSet<char> = first.chars().collect();
         for char in second.chars() {
             if set.contains(&char) {
                 priorities[get_index(&char)] += 1;
