@@ -13,21 +13,13 @@ fn get_index(c: &char) -> usize {
 
 fn main() {
     let data = fs::read_to_string("data.txt").unwrap();
-    let groups = data
-        .lines()
-        .enumerate()
-        .fold(Vec::new(), |mut acc, (i, item)| {
-            if i % 3 == 0 {
-                acc.push(Vec::new());
-            }
-            acc.last_mut().unwrap().push(item);
-            acc
-        });
+    let lines = data.lines().collect::<Vec<&str>>();
+    let groups = lines.chunks(3).collect::<Vec<&[&str]>>();
 
     let mut priorities: Vec<i32> = vec![0; 53];
 
     for group in groups {
-        match group.as_slice() {
+        match group {
             [a, b, c] => {
                 let first: HashSet<char> = a.chars().collect();
                 let second: HashSet<char> = b.chars().collect();
@@ -36,8 +28,8 @@ fn main() {
                 let first_pass: HashSet<char> = first.intersection(&second).cloned().collect();
                 let final_pass: Vec<char> = first_pass.intersection(&third).cloned().collect();
                 priorities[get_index(&final_pass[0])] += 1;
-            },
-            _ => break
+            }
+            _ => break,
         }
     }
 
