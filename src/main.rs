@@ -40,13 +40,14 @@ fn main() {
 
     let moves: Vec<Move> = raw_moves
         .map(|s| {
-            s.chars()
+            let positions = s
+                .chars()
                 .filter(|c| c.is_numeric())
                 .map(|c| c.to_digit(10).unwrap() as i32)
-        })
-        .map(|digits| {
-            let nums = digits.take(3).collect::<Vec<i32>>();
-            match nums.as_slice() {
+                .take(3)
+                .collect::<Vec<i32>>();
+
+            match positions.as_slice() {
                 [a, b, c] => Move {
                     count: *a,
                     start: *b as usize,
