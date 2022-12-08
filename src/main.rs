@@ -1,11 +1,6 @@
 // https://adventofcode.com/2022/day/7
 
-use std::{
-    borrow::Borrow,
-    cell::RefCell,
-    fs,
-    rc::{Rc, Weak},
-};
+use std::{cell::RefCell, fs, rc::Rc};
 
 type NodeLink = Rc<RefCell<Node>>;
 
@@ -13,7 +8,6 @@ type NodeLink = Rc<RefCell<Node>>;
 struct Node {
     name: String,
     size: i64,
-    parent: Option<Weak<RefCell<Node>>>,
     children: Vec<NodeLink>,
 }
 
@@ -22,11 +16,10 @@ impl Node {
         self.name == name
     }
 
-    fn new_child(&self, parent: &NodeLink, name: &str, size: i64) -> NodeLink {
+    fn new_child(&self, name: &str, size: i64) -> NodeLink {
         Rc::new(RefCell::new(Node {
             name: String::from(name),
             size,
-            parent: Some(Rc::<RefCell<Node>>::downgrade(parent)),
             children: Vec::new(),
         }))
     }
@@ -38,50 +31,71 @@ fn main() {
 
     let root = Rc::new(RefCell::new(Node {
         name: String::from("/"),
-        parent: None,
         size: 0,
         children: Vec::new(),
     }));
 
     // maaaybe try using a stack to keep track of where we are
-
-    let mut root_ref = &Rc::clone(&root);
+    let mut parent_stack: Vec<&NodeLink> = Vec::new();
+    parent_stack.push(&root);
 
     for command in commands {
         match command.split(" ").collect::<Vec<&str>>().as_slice() {
             ["$", "cd", ".."] => {
                 // todo
+                if !parent_stack.is_empty() {
+                    parent_stack.pop();
+                }
             }
-            ["$", "cd", path] => {
-                let parent = root_ref.as_ref().borrow();
+            ["$", "cd", dir_path] => {
+                let clone = parent_stack.last().unwrap().clone().as_ref().borrow();
 
-                let child = parent
+                let child = clone
                     .children
                     .iter()
-                    .find(|node| node.as_ref().borrow().equals(path));
+                    .find(|node| node.as_ref().borrow().equals(&dir_path));
 
                 match child {
                     Some(node) => {
+                        // let another = node.clone().borrow();
+                        // parent_stack.push(another);
+                        // parent_stack.push(&Rc::clone(&node));
+                        // parent_stack.push(node);
                     }
                     None => (),
                 }
             }
             ["$", "ls"] => (),
             ["dir", name] => {
-                let new_dir = root_ref
+                let new_dir = parent_stack
+                    .last()
+                    .unwrap()
                     .as_ref()
                     .borrow()
-                    .new_child(root_ref.borrow(), *name, 0);
-                root_ref.as_ref().borrow_mut().children.push(new_dir);
+                    .new_child(*name, 0);
+                parent_stack
+                    .last()
+                    .unwrap()
+                    .as_ref()
+                    .borrow_mut()
+                    .children
+                    .push(new_dir);
             }
             // files
             [size, filename] => {
-                let new_file = root_ref.as_ref().borrow().new_child(
-                    root_ref.borrow(),
-                    filename,
-                    size.parse::<i64>().unwrap(),
-                );
-                root_ref.as_ref().borrow_mut().children.push(new_file);
+                let new_file = parent_stack
+                    .last()
+                    .unwrap()
+                    .as_ref()
+                    .borrow()
+                    .new_child(filename, size.parse::<i64>().unwrap());
+                parent_stack
+                    .last()
+                    .unwrap()
+                    .as_ref()
+                    .borrow_mut()
+                    .children
+                    .push(new_file);
             }
             _ => (),
         };
