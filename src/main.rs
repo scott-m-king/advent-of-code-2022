@@ -2,6 +2,10 @@
 
 use std::fs;
 
+fn get_viewing_distance(line: &[i32], height: &i32, is_reverse: bool) -> i32 {
+    0
+}
+
 fn main() {
     let data = fs::read_to_string("data.txt").unwrap();
     let items = data.lines();
@@ -16,35 +20,70 @@ fn main() {
 
     let grid_ref = &grid;
 
-    let result: usize = grid
+    let result = grid
         .iter()
         .enumerate()
         .map(|(row_i, row)| {
             row.iter()
                 .enumerate()
-                .filter(move |(col_i, height)| {
-                    if row_i == 0
-                        || *col_i == 0
-                        || row_i == grid_ref.len()
-                        || *col_i == row.len() - 1
-                    {
-                        return true;
+                .map(move |(col_i, height)| {
+                    let col = grid_ref.iter().map(|r| r[col_i]).collect::<Vec<i32>>();
+
+                    let lines = [
+                        row.get(1..col_i),                     // before in row (need to reverse)
+                        row.get((col_i + 1)..(row.len() - 1)), // after in row
+                        col.get(1..row_i),                     // before in col (need to reverse)
+                        col.get((row_i + 1)..(col.len() - 1)), // after in col
+                    ];
+
+                    match lines {
+                        [Some(r_before), Some(r_after), Some(c_before), Some(c_after)] => {
+                            let mut a = 1;
+                            for x in r_before.iter().rev() {
+                                if height > x {
+                                    a += 1;
+                                } else {
+                                    break;
+                                }
+                            }
+
+                            let mut b = 1;
+                            for x in r_after.iter() {
+                                if height > x {
+                                    b += 1;
+                                } else {
+                                    break;
+                                }
+                            }
+
+                            let mut c = 1;
+                            for x in c_before.iter().rev() {
+                                if height > x {
+                                    c += 1;
+                                } else {
+                                    break;
+                                }
+                            }
+
+                            let mut d = 1;
+                            for x in c_after.iter() {
+                                if height > x {
+                                    d += 1;
+                                } else {
+                                    break;
+                                }
+                            }
+                            // println!("{}, {}, {}, {}", a, b, c, d);
+                            return a * b * c * d;
+                        }
+                        _ => 0,
                     }
-
-                    let col = grid_ref.iter().map(|r| r[*col_i]).collect::<Vec<i32>>();
-
-                    return [
-                        row.get(..*col_i).unwrap(),       // before in row
-                        row.get((*col_i + 1)..).unwrap(), // after in row
-                        col.get(..row_i).unwrap(),        // before in col
-                        col.get((row_i + 1)..).unwrap(),  // after in col
-                    ]
-                    .iter()
-                    .any(|view| view.iter().all(|view_height| *height > view_height));
                 })
-                .count()
+                .max()
+                .unwrap()
         })
-        .sum();
+        .max()
+        .unwrap();
 
     println!("{:?}", result);
 }
