@@ -7,33 +7,34 @@ struct File {
     name: String,
     index: usize,
     parent: usize,
-    size: i64,
+    size: i32,
 }
 
-fn directory_sum(
+fn get_directory_size(
     files: &Vec<File>,
     directories: &Vec<File>,
     dir_index: usize,
-    visited: &mut HashMap<usize, i64>,
-) -> i64 {
-    let file_sum: i64 = files
+    visited: &mut HashMap<usize, i32>,
+) -> i32 {
+    let file_size_sum = files
         .iter()
         .filter(|file| file.parent == dir_index)
         .map(|file| file.size)
         .sum();
 
-    let directory_sum = directories
+    let directory_size = directories
         .iter()
         .filter(|dir| dir.parent == dir_index)
-        .fold(file_sum, |sum, dir| {
+        .fold(file_size_sum, |sum, dir| {
             if visited.contains_key(&dir.index) {
                 return sum + visited.get(&dir.index).unwrap();
             }
-            return sum + directory_sum(files, directories, dir.index, visited);
+            return sum + get_directory_size(files, directories, dir.index, visited);
         });
 
-    visited.insert(dir_index, directory_sum);
-    return directory_sum;
+    visited.insert(dir_index, directory_size);
+
+    return directory_size;
 }
 
 fn main() {
@@ -81,19 +82,19 @@ fn main() {
                     name: String::from(*filename),
                     parent: current_index,
                     index: 0,
-                    size: size.parse::<i64>().unwrap(),
+                    size: size.parse::<i32>().unwrap(),
                 });
             }
             _ => {}
         }
     }
 
-    let mut visited: HashMap<usize, i64> = HashMap::new();
+    let mut visited: HashMap<usize, i32> = HashMap::new();
 
-    let result: i64 = directories
+    let result: i32 = directories
         .iter()
         .filter(|dir| dir.name != "/")
-        .map(|dir| directory_sum(&files, &directories, dir.index, &mut visited))
+        .map(|dir| get_directory_size(&files, &directories, dir.index, &mut visited))
         .filter(|size| *size <= 100000)
         .sum();
 

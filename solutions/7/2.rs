@@ -17,30 +17,31 @@ struct File {
     size: i32,
 }
 
-fn directory_sum(
+fn get_directory_size(
     files: &Vec<File>,
     directories: &Vec<File>,
     dir_index: usize,
     visited: &mut HashMap<usize, i32>,
 ) -> i32 {
-    let file_sum: i32 = files
+    let file_size_sum: i32 = files
         .iter()
         .filter(|file| file.parent == dir_index)
         .map(|file| file.size)
         .sum();
 
-    let directory_sum = directories
+    let directory_size = directories
         .iter()
         .filter(|dir| dir.index != 0 && dir.parent == dir_index)
-        .fold(file_sum, |sum, dir| {
+        .fold(file_size_sum, |sum, dir| {
             if visited.contains_key(&dir.index) {
                 return sum + visited.get(&dir.index).unwrap();
             }
-            return sum + directory_sum(files, directories, dir.index, visited);
+            return sum + get_directory_size(files, directories, dir.index, visited);
         });
 
-    visited.insert(dir_index, directory_sum);
-    return directory_sum;
+    visited.insert(dir_index, directory_size);
+
+    return directory_size;
 }
 
 fn main() {
@@ -99,7 +100,7 @@ fn main() {
 
     let unsorted = directories
         .iter()
-        .map(|dir| directory_sum(&files, &directories, dir.index, &mut visited))
+        .map(|dir| get_directory_size(&files, &directories, dir.index, &mut visited))
         .collect::<Vec<i32>>();
 
     let mut sorted = unsorted.iter().fold(BinaryHeap::new(), |mut heap, curr| {
