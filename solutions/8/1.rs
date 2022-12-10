@@ -19,24 +19,25 @@ fn main() {
     let result = grid
         .iter()
         .enumerate()
-        .map(|(i, row)| {
+        .map(|(row_i, row)| {
             row.iter()
                 .enumerate()
-                .map(move |(j, height)| {
-                    if i == 0 || j == 0 || i == grid_ref.len() || j == row.len() - 1 {
+                .map(move |(col_i, height)| {
+                    if row_i == 0 || col_i == 0 || row_i == grid_ref.len() || col_i == row.len() - 1
+                    {
                         return true;
                     }
 
-                    let r_before = row.get(..j).unwrap();
-                    let r_after = row.get((j + 1)..).unwrap();
+                    let col = grid_ref.iter().map(|r| r[col_i]).collect::<Vec<i32>>();
 
-                    let col = grid_ref.iter().map(|r| r[j]).collect::<Vec<i32>>();
-                    let c_before = col.get(..i).unwrap();
-                    let c_after = col.get((i + 1)..).unwrap();
-
-                    return [r_before, r_after, c_before, c_after]
-                        .iter()
-                        .any(|view| view.iter().all(|view_height| height > view_height));
+                    return [
+                        row.get(..col_i).unwrap(),       // before in row
+                        row.get((col_i + 1)..).unwrap(), // after in row
+                        col.get(..row_i).unwrap(),       // before in col
+                        col.get((row_i + 1)..).unwrap(), // after in col
+                    ]
+                    .iter()
+                    .any(|view| view.iter().all(|view_height| height > view_height));
                 })
                 .filter(|x| *x == true)
         })
