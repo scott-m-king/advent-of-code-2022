@@ -16,7 +16,7 @@ fn main() {
 
     let grid_ref = &grid;
 
-    let result: i32 = grid
+    let result: usize = grid
         .iter()
         .enumerate()
         .map(|(row_i, row)| {
@@ -42,8 +42,7 @@ fn main() {
                     .iter()
                     .any(|view| view.iter().all(|view_height| *height > view_height));
                 })
-                .fold(0, |acc, _| acc + 1)
-            // .filter(|x| *x == true)
+                .count()
         })
         .sum();
 
