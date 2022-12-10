@@ -14,48 +14,42 @@ fn get_dir_sum(
     files: &Vec<File>,
     directories: &Vec<File>,
     dir_index: usize,
-    visited: &mut HashMap<String, i64>,
+    visited: &mut HashMap<usize, i64>,
 ) -> i64 {
-    let mut level_sum: i64 = 0;
+    let mut dir_sum: i64 = 0;
 
     for file in files.iter().filter(|file| file.parent == dir_index) {
-        level_sum += file.size;
+        dir_sum += file.size;
     }
 
     for directory in directories.iter().filter(|dir| dir.parent == dir_index) {
-        if visited.contains_key(&directory.name) {
-            level_sum += visited.get(&directory.name).unwrap();
+        if visited.contains_key(&directory.index) {
+            dir_sum += visited.get(&directory.index).unwrap();
         } else {
-            level_sum += get_dir_sum(files, directories, directory.index, visited);
+            dir_sum += get_dir_sum(files, directories, directory.index, visited);
         }
     }
 
-    visited.insert(
-        directories
-            .iter()
-            .find(|dir| dir.index == dir_index)
-            .unwrap()
-            .name
-            .clone(),
-        level_sum,
-    );
+    visited.insert(dir_index, dir_sum);
 
-    // println!("{:?}", visited);
-    return level_sum;
+    return dir_sum;
 }
 
 fn main() {
     let data = fs::read_to_string("data.txt").unwrap();
     let commands = data.lines();
 
-    let mut index = 0;
+    let mut current_index = 0;
+    let mut current_parent: Vec<usize> = Vec::new();
+
     let mut directories: Vec<File> = Vec::new();
     let mut files: Vec<File> = Vec::new();
 
     for command in commands {
+        println!("{}", command);
         match command.split(" ").collect::<Vec<&str>>().as_slice() {
             ["$", "cd", ".."] => {
-                index -= 1;
+                current_index = current_parent.pop().unwrap();
             }
             ["$", "cd", "/"] => {
                 directories.push(File {
@@ -66,26 +60,26 @@ fn main() {
                 });
             }
             ["$", "cd", dirname] => {
-                let new_index = directories
+                current_parent.push(current_index);
+                current_index = directories
                     .iter()
-                    .find(|dir| dir.name == *dirname)
+                    .find(|dir| dir.parent == current_index && dir.name == *dirname)
                     .unwrap()
                     .index;
-                index = new_index;
             }
             ["$", "ls"] => {}
             ["dir", dirname] => {
                 directories.push(File {
                     name: String::from(*dirname),
                     index: directories.len(),
-                    parent: index,
+                    parent: current_index,
                     size: 0,
                 });
             }
             [size, filename] => {
                 files.push(File {
                     name: String::from(*filename),
-                    parent: index,
+                    parent: current_index,
                     index: 0,
                     size: size.parse::<i64>().unwrap(),
                 });
@@ -94,7 +88,7 @@ fn main() {
         }
     }
 
-    let mut visited: HashMap<String, i64> = HashMap::new();
+    let mut visited: HashMap<usize, i64> = HashMap::new();
 
     let result: i64 = directories
         .iter()
