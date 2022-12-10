@@ -1,104 +1,107 @@
 // https://adventofcode.com/2022/day/7
 
-use std::{cell::RefCell, fs, rc::Rc};
-
-type NodeLink = Rc<RefCell<Node>>;
+use std::{collections::HashMap, fs};
 
 #[derive(Debug)]
-struct Node {
+struct File {
     name: String,
+    index: usize,
+    parent: usize,
     size: i64,
-    children: Vec<NodeLink>,
 }
 
-impl Node {
-    fn equals(&self, name: &str) -> bool {
-        self.name == name
+fn get_dir_sum(
+    files: &Vec<File>,
+    directories: &Vec<File>,
+    dir_index: usize,
+    visited: &mut HashMap<String, i64>,
+) -> i64 {
+    let mut level_sum: i64 = 0;
+
+    for file in files.iter().filter(|file| file.parent == dir_index) {
+        level_sum += file.size;
     }
 
-    fn new_child(&self, name: &str, size: i64) -> NodeLink {
-        Rc::new(RefCell::new(Node {
-            name: String::from(name),
-            size,
-            children: Vec::new(),
-        }))
+    for directory in directories.iter().filter(|dir| dir.parent == dir_index) {
+        if visited.contains_key(&directory.name) {
+            level_sum += visited.get(&directory.name).unwrap();
+        } else {
+            level_sum += get_dir_sum(files, directories, directory.index, visited);
+        }
     }
+
+    visited.insert(
+        directories
+            .iter()
+            .find(|dir| dir.index == dir_index)
+            .unwrap()
+            .name
+            .clone(),
+        level_sum,
+    );
+
+    // println!("{:?}", visited);
+    return level_sum;
 }
 
 fn main() {
-    let data = fs::read_to_string("test.txt").unwrap();
+    let data = fs::read_to_string("data.txt").unwrap();
     let commands = data.lines();
 
-    let root = Rc::new(RefCell::new(Node {
-        name: String::from("/"),
-        size: 0,
-        children: Vec::new(),
-    }));
-
-    // maaaybe try using a stack to keep track of where we are
-    let mut parent_stack: Vec<&NodeLink> = Vec::new();
-    parent_stack.push(&root);
+    let mut index = 0;
+    let mut directories: Vec<File> = Vec::new();
+    let mut files: Vec<File> = Vec::new();
 
     for command in commands {
         match command.split(" ").collect::<Vec<&str>>().as_slice() {
             ["$", "cd", ".."] => {
-                // todo
-                if !parent_stack.is_empty() {
-                    parent_stack.pop();
-                }
+                index -= 1;
             }
-            ["$", "cd", dir_path] => {
-                let clone = parent_stack.last().unwrap().clone().as_ref().borrow();
-
-                let child = clone
-                    .children
+            ["$", "cd", "/"] => {
+                directories.push(File {
+                    name: String::from("/"),
+                    index: 0,
+                    parent: 0,
+                    size: 0,
+                });
+            }
+            ["$", "cd", dirname] => {
+                let new_index = directories
                     .iter()
-                    .find(|node| node.as_ref().borrow().equals(&dir_path));
-
-                match child {
-                    Some(node) => {
-                        // let another = node.clone().borrow();
-                        // parent_stack.push(another);
-                        // parent_stack.push(&Rc::clone(&node));
-                        // parent_stack.push(node);
-                    }
-                    None => (),
-                }
-            }
-            ["$", "ls"] => (),
-            ["dir", name] => {
-                let new_dir = parent_stack
-                    .last()
+                    .find(|dir| dir.name == *dirname)
                     .unwrap()
-                    .as_ref()
-                    .borrow()
-                    .new_child(*name, 0);
-                parent_stack
-                    .last()
-                    .unwrap()
-                    .as_ref()
-                    .borrow_mut()
-                    .children
-                    .push(new_dir);
+                    .index;
+                index = new_index;
             }
-            // files
+            ["$", "ls"] => {}
+            ["dir", dirname] => {
+                directories.push(File {
+                    name: String::from(*dirname),
+                    index: directories.len(),
+                    parent: index,
+                    size: 0,
+                });
+            }
             [size, filename] => {
-                let new_file = parent_stack
-                    .last()
-                    .unwrap()
-                    .as_ref()
-                    .borrow()
-                    .new_child(filename, size.parse::<i64>().unwrap());
-                parent_stack
-                    .last()
-                    .unwrap()
-                    .as_ref()
-                    .borrow_mut()
-                    .children
-                    .push(new_file);
+                files.push(File {
+                    name: String::from(*filename),
+                    parent: index,
+                    index: 0,
+                    size: size.parse::<i64>().unwrap(),
+                });
             }
-            _ => (),
-        };
+            _ => {}
+        }
     }
-    println!("{:?}", root);
+
+    let mut visited: HashMap<String, i64> = HashMap::new();
+
+    let result: i64 = directories
+        .iter()
+        .filter(|dir| dir.name != "/")
+        .map(|dir| get_dir_sum(&files, &directories, dir.index, &mut visited))
+        .filter(|size| *size <= 100000)
+        .sum();
+
+    println!("{}", result);
 }
