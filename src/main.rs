@@ -7,6 +7,10 @@ use std::{collections::HashSet, fs};
 type Pos = (i32, i32);
 type Move = (String, i32);
 
+struct Head {
+    pos: Pos,
+}
+
 #[derive(Debug)]
 struct Knot {
     head: Pos,
@@ -16,8 +20,6 @@ struct Knot {
 
 impl Knot {
     pub fn process_move(&mut self, (dir, count): &Move) {
-        // println!("{}, {}", dir, count);
-
         for _ in 0..*count {
             let (x, y) = self.head;
             match dir.as_str() {
@@ -87,7 +89,7 @@ impl Knot {
                 }
             }
         }
-        return false;
+        false
     }
 
     pub fn print_path(&self) {
@@ -100,9 +102,7 @@ impl Knot {
 
         for _ in min_x..(max_x + 2) {
             let mut row: Vec<&str> = Vec::new();
-            for _ in min_y..(max_y + 2) {
-                row.push(" ");
-            }
+            row.resize(((max_y + 2) - min_y) as usize, " ");
             grid.push(row);
         }
 
@@ -125,11 +125,11 @@ impl Knot {
 }
 
 fn main() {
-    let data = fs::read_to_string("data.txt").unwrap();
+    let data = fs::read_to_string("test.txt").unwrap();
     let moves = data
         .lines()
         .map(|item| {
-            let split = item.split(" ").collect::<Vec<&str>>();
+            let split = item.split(' ').collect::<Vec<&str>>();
             match split.as_slice() {
                 [dir, count] => (String::from(*dir), count.parse::<i32>().unwrap()),
                 _ => {
@@ -149,6 +149,6 @@ fn main() {
         knot.process_move(&mov);
     }
 
-    // 6358 too high
+    knot.print_path();
     println!("{}", knot.tail_visited.len());
 }
