@@ -9,51 +9,68 @@ type Move = (String, i32);
 
 struct Head {
     pos: Pos,
+    knots: Vec<Knot>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Knot {
     head: Pos,
-    tail: Pos,
-    tail_visited: HashSet<Pos>,
+    pos: Pos,
+    visited: HashSet<Pos>,
 }
 
-impl Knot {
+impl Head {
     pub fn process_move(&mut self, (dir, count): &Move) {
         for _ in 0..*count {
-            let (x, y) = self.head;
+            let (x, y) = self.pos;
             match dir.as_str() {
                 "U" => {
-                    self.head = (x, y + 1);
+                    self.pos = (x, y + 1);
                 }
                 "D" => {
-                    self.head = (x, y - 1);
+                    self.pos = (x, y - 1);
                 }
                 "L" => {
-                    self.head = (x - 1, y);
+                    self.pos = (x - 1, y);
                 }
                 "R" => {
-                    self.head = (x + 1, y);
+                    self.pos = (x + 1, y);
                 }
                 _ => {
                     panic!("invalid move: {} {}", dir, count)
                 }
             };
-            self._update_tail();
+
+            let clone = self.knots.clone();
+            let mut new_pos = self.pos;
+            let mut new_knots: Vec<Knot> = Vec::new();
+            for mut knot in clone {
+                new_pos = knot.process_move(new_pos);
+                new_knots.push(knot);
+            }
+            self.knots = new_knots.clone();
+        }
+    }
+}
+
+impl Knot {
+    pub fn process_move(&mut self, new_head: Pos) -> Pos {
+        self.head = new_head;
+        self._update_pos();
+        self.pos
+    }
+
+    fn _update_pos(&mut self) {
+        if !self._is_adjacent(self.pos) {
+            let new_tail = self._move_pos();
+            self.visited.insert(new_tail);
+            self.pos = new_tail;
         }
     }
 
-    fn _update_tail(&mut self) {
-        if !self._is_adjacent(self.tail) {
-            let new_tail = self._move_tail();
-            self.tail_visited.insert(new_tail);
-            self.tail = new_tail;
-        }
-    }
-
-    fn _move_tail(&mut self) -> Pos {
+    fn _move_pos(&mut self) -> Pos {
         let (head_x, head_y) = self.head;
-        let (tail_x, tail_y) = self.tail;
+        let (tail_x, tail_y) = self.pos;
 
         // moving left/right
         if head_y == tail_y {
@@ -93,10 +110,10 @@ impl Knot {
     }
 
     pub fn print_path(&self) {
-        let max_x = *self.tail_visited.iter().map(|(x, _)| x).max().unwrap();
-        let min_x = *self.tail_visited.iter().map(|(x, _)| x).min().unwrap();
-        let max_y = *self.tail_visited.iter().map(|(_, y)| y).max().unwrap();
-        let min_y = *self.tail_visited.iter().map(|(_, y)| y).min().unwrap();
+        let max_x = *self.visited.iter().map(|(x, _)| x).max().unwrap();
+        let min_x = *self.visited.iter().map(|(x, _)| x).min().unwrap();
+        let max_y = *self.visited.iter().map(|(_, y)| y).max().unwrap();
+        let min_y = *self.visited.iter().map(|(_, y)| y).min().unwrap();
 
         let mut grid: Vec<Vec<&str>> = Vec::new();
 
@@ -106,16 +123,16 @@ impl Knot {
             grid.push(row);
         }
 
-        for (x, y) in &self.tail_visited {
+        for (x, y) in &self.visited {
             grid[(*x - min_x) as usize][(*y - min_y) as usize] = "#";
         }
 
-        grid[(self.tail.0 - min_x) as usize][(self.tail.1 - min_y) as usize] = "T";
+        grid[(self.pos.0 - min_x) as usize][(self.pos.1 - min_y) as usize] = "T";
         grid[(self.head.0 - min_x) as usize][(self.head.1 - min_y) as usize] = "H";
 
         println!("\n");
         println!("head: {:?}", self.head);
-        println!("tail: {:?}", self.tail);
+        println!("tail: {:?}", self.pos);
 
         for row in grid {
             println!("{:?}", row);
@@ -125,7 +142,7 @@ impl Knot {
 }
 
 fn main() {
-    let data = fs::read_to_string("test.txt").unwrap();
+    let data = fs::read_to_string("data.txt").unwrap();
     let moves = data
         .lines()
         .map(|item| {
@@ -139,16 +156,33 @@ fn main() {
         })
         .collect::<Vec<Move>>();
 
-    let mut knot = Knot {
-        head: (0, 0),
-        tail: (0, 0),
-        tail_visited: HashSet::from([(0, 0)]),
+    let mut head = Head {
+        pos: (0, 0),
+        knots: vec![
+            Knot {
+                head: (0, 0),
+                pos: (0, 0),
+                visited: HashSet::from([(0, 0)])
+            };
+            9
+        ],
     };
 
     for mov in moves {
-        knot.process_move(&mov);
+        head.process_move(&mov);
     }
 
-    knot.print_path();
-    println!("{}", knot.tail_visited.len());
+    // let mut knot = Knot {
+    //     head: (0, 0),
+    //     tail: (0, 0),
+    //     tail_visited: HashSet::from([(0, 0)]),
+    // };
+
+    // for mov in moves {
+    //     knot.process_move(&mov);
+    // }
+
+    let last = head.knots.last().unwrap();
+    // last.print_path();
+    println!("{}", last.visited.len());
 }
