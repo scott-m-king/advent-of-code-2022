@@ -50,16 +50,16 @@ impl Monkey {
         }
     }
 
-    fn take_turn(&mut self) -> Vec<(usize, Item)> {
+    pub fn take_turn(&mut self) -> Vec<(usize, Item)> {
         let mut result: Vec<(usize, Item)> = Vec::new();
         while !self.items.is_empty() {
             let item_to_process = self.items.pop_front();
             match item_to_process {
                 Some(mut item) => {
-                    self.inspect(&mut item);
+                    self._inspect(&mut item);
                     self.times_inspected += 1;
-                    self.test(&item);
-                    result.push(self.throw_to(&item));
+                    self._test(&item);
+                    result.push(self._throw_to(&item));
                 }
                 None => {}
             };
@@ -67,11 +67,11 @@ impl Monkey {
         result
     }
 
-    fn catch(&mut self, item: Item) {
+    pub fn catch(&mut self, item: Item) {
         self.items.push_back(item);
     }
 
-    fn inspect(&self, item: &mut Item) {
+    fn _inspect(&self, item: &mut Item) {
         match self.multiplier.as_str() {
             "old" => item.worry_level = item.worry_level.pow(2),
             _ => {
@@ -86,12 +86,12 @@ impl Monkey {
         item.worry_level /= 3;
     }
 
-    fn test(&self, item: &Item) -> bool {
+    fn _test(&self, item: &Item) -> bool {
         item.worry_level % (self.divisible_by as i32) == 0
     }
 
-    fn throw_to(&self, item: &Item) -> (usize, Item) {
-        match self.test(item) {
+    fn _throw_to(&self, item: &Item) -> (usize, Item) {
+        match self._test(item) {
             true => (self.true_throw_to, item.clone()),
             false => (self.false_throw_to, item.clone()),
         }
@@ -164,8 +164,8 @@ fn main() {
 
     for i in 0..(len * 20) {
         let monkey = monkeys.get_mut(i % len).unwrap();
-        let results = monkey.take_turn();
-        for (throw_to, item) in results {
+        let throws = monkey.take_turn();
+        for (throw_to, item) in throws {
             monkeys[throw_to].catch(item);
         }
     }
