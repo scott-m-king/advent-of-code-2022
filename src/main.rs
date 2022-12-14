@@ -37,7 +37,7 @@ struct Monkey {
 }
 
 impl Monkey {
-    fn new() -> Monkey {
+    pub fn new() -> Monkey {
         Monkey {
             num: 0,
             items: VecDeque::new(),
@@ -50,6 +50,10 @@ impl Monkey {
         }
     }
 
+    pub fn catch(&mut self, item: Item) {
+        self.items.push_back(item);
+    }
+
     pub fn take_turn(&mut self) -> Vec<(usize, Item)> {
         let mut result: Vec<(usize, Item)> = Vec::new();
         while !self.items.is_empty() {
@@ -57,8 +61,6 @@ impl Monkey {
             match item_to_process {
                 Some(mut item) => {
                     self._inspect(&mut item);
-                    self.times_inspected += 1;
-                    self._test(&item);
                     result.push(self._throw_to(&item));
                 }
                 None => {}
@@ -67,11 +69,7 @@ impl Monkey {
         result
     }
 
-    pub fn catch(&mut self, item: Item) {
-        self.items.push_back(item);
-    }
-
-    fn _inspect(&self, item: &mut Item) {
+    fn _inspect(&mut self, item: &mut Item) {
         match self.multiplier.as_str() {
             "old" => item.worry_level = item.worry_level.pow(2),
             _ => {
@@ -82,8 +80,7 @@ impl Monkey {
                 )
             }
         }
-
-        item.worry_level /= 3;
+        self.times_inspected += 1;
     }
 
     fn _test(&self, item: &Item) -> bool {
@@ -99,7 +96,7 @@ impl Monkey {
 }
 
 fn main() {
-    let data = fs::read_to_string("data.txt").unwrap();
+    let data = fs::read_to_string("test.txt").unwrap();
     let lines = data.lines().collect::<Vec<&str>>();
     let chunks = lines
         .chunks(7)
@@ -178,5 +175,6 @@ fn main() {
         .take(2)
         .product();
 
+    println!("{:#?}", monkeys);
     println!("{}", results);
 }
