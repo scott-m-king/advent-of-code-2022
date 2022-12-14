@@ -160,8 +160,9 @@ fn main() {
         monkeys.push(monkey);
     }
 
-    for i in 0..(monkeys.len() * 20) {
-        let len = monkeys.len();
+    let len = monkeys.len();
+
+    for i in 0..(len * 20) {
         let monkey = monkeys.get_mut(i % len).unwrap();
         let results = monkey.take_turn();
         for (throw_to, item) in results {
