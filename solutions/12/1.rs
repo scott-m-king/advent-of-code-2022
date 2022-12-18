@@ -28,11 +28,9 @@ fn get_height_from_letter(letter: char) -> i32 {
 fn bfs(grid: &Vec<Vec<char>>, start: Pos, end: Pos) -> usize {
     let mut queue: VecDeque<Path> = VecDeque::from([Path {
         next: start,
-        path_so_far: Vec::from([start]),
+        path_so_far: Vec::new(),
     }]);
-    let mut visited: HashSet<Pos> = HashSet::from([start]);
-
-    let mut path_lens: Vec<usize> = Vec::new();
+    let mut visited: HashSet<Pos> = HashSet::new();
 
     while !queue.is_empty() {
         let mut path = queue.pop_front().unwrap();
@@ -54,8 +52,7 @@ fn bfs(grid: &Vec<Vec<char>>, start: Pos, end: Pos) -> usize {
 
                 if next_height - curr_height <= 1 {
                     if next_r == end.0 && next_c == end.1 {
-                        path_lens.push(path.path_so_far.len() - 1);
-                        continue;
+                        return path.path_so_far.len();
                     }
 
                     visited.insert((next_r, next_c));
@@ -68,12 +65,11 @@ fn bfs(grid: &Vec<Vec<char>>, start: Pos, end: Pos) -> usize {
             }
         }
     }
-
-    return *path_lens.iter().min().unwrap();
+    0
 }
 
 fn main() {
-    let data = fs::read_to_string("data.txt").unwrap();
+    let data = fs::read_to_string("test.txt").unwrap();
     let mut start_pos: Pos = (0, 0);
     let mut end_pos: Pos = (0, 0);
     let items = data
